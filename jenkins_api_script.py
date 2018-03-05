@@ -113,16 +113,19 @@ if __name__ == "__main__":
     test_sqlalchemy_core()
     test_sqlalchemy_orm()
 
-# Decalared input for Username and Password
+# Decalared input for Username, Password and Jenkins URL
+jenkins_url = 'http://localhost:8080'
 username = input('Your username: ')
 password = input('Password: ')
 
 
 """ Function to connect the Jenkins API or get server instance"""
 def jenkins_connection(jenkins_url, username, password):
-    jenkins_url = 'http://localhost:8080'
     server = Jenkins(jenkins_url, username=username, password=password)
     return server
+
+if __name__ == '__main__':
+    print ('Using Jenkins Version: %s' %jenkins_connection(jenkins_url, username, password).version)
 
 
 """ Function to add a Job in the job list """
@@ -158,7 +161,6 @@ def create_joblist(start, lastname, jobname):
 
 
 # Now we can proceed to define the arguments needed for our jenkins_connection function
-jenkins_url = 'http://jenkins_host:8080'
 server = jenkins_connection(jenkins_url, username, password)
 
 
