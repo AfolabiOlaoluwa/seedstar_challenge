@@ -58,6 +58,7 @@ venv.bak/
 # gitignore Databases
 jenkins.sqlite3
 sqlite3.sqlite3
+enkins.sqlite3
 
 # Pycharm file systems
 .idea

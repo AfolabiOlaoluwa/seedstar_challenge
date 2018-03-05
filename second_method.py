@@ -1,5 +1,4 @@
-# This method creates the database and commit, but it doesnt create the table.
-# It wont commit job instance.
+# Using jenkins jobs.py, jenkins.py, and build.py
 
 from jenkinsapi.jenkins import Jenkins
 import sqlite3
@@ -9,30 +8,21 @@ from datetime import datetime
 username = input('Your username: ')
 password = input('Password: ')
 
-db_name = 'enkins.db'
+# Initialization and connection
+database = 'enkins.sqlite3'
 jenkins_url = 'http://localhost:8080'
-#server = jenkins_connection(jenkins_url, username, password)
-conn = sqlite3.connect(db_name)
-c = conn.cursor()
-
-### Database details  #####
-db_name = 'testing.db'  ## sqlite database path
-
-### get server instance  #####
 server = Jenkins(jenkins_url, username, password)
-
-### create dictionary that holds the jobs name as keys and status as values ###
-dict = {}
-
-### connect to database  #####
-conn = sqlite3.connect(db_name)
+conn = sqlite3.connect(database)
 c = conn.cursor()
+
+# A dictionary that holds the jobs name as keys and status as values
+dict = {}
 
 for job_name, job_instance in server.get_jobs():
     if job_instance.is_running():
         status = 'RUNNING'
     elif job_instance.get_last_build_or_none() == None:
-        status = 'NOTBUILT'
+        status = 'UNBUILT'
     else:
         simple_job = server.get_job(job_instance.name)
         simple_build = simple_job.get_last_build()
@@ -49,11 +39,11 @@ for job_name, job_instance in server.get_jobs():
         tuple2 = (status, checked_time, job_instance.name)
         c.execute('UPDATE jenkins SET status=?, date_checked=? WHERE job_name=?', tuple2)
 
-    ### Add to dictionary ###
+    # Add to dictionary
     dict[job_instance.name] = status
 
-# Save (commit) the changes
+# Save/commit the changes
 conn.commit()
 
-# We can close the connection
+# Close connection
 conn.close()
