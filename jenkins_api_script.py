@@ -11,7 +11,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 import datetime
 
-
 Base = declarative_base()
 session = scoped_session(sessionmaker())
 
@@ -35,11 +34,6 @@ class Jobs(Base):
         ),
     )
 
-table = Jobs.__table__
-
-has_index(table.c.jenkins_id)
-has_index(table.c.time_stamp)
-has_unique_index(table.c.jenkins_id)
 
 # Initialization
 def init_db(dbname='sqlite:///jenkins.sqlite3'):
@@ -125,7 +119,7 @@ def jenkins_connection(jenkins_url, username, password):
     return server
 
 if __name__ == '__main__':
-    print ('Using Jenkins Version: %s' %jenkins_connection(jenkins_url, username, password).version)
+    print ('You are using Jenkins Version: %s' %jenkins_connection(jenkins_url, username, password).version)
 
 
 """ Function to add a Job in the job list """
@@ -160,40 +154,34 @@ def create_joblist(start, lastname, jobname):
     return job_list
 
 
-# Now we can proceed to define the arguments needed for our jenkins_connection function
-server = jenkins_connection(jenkins_url, username, password)
-
-
 # Define authenticated to be false so that our conditional statements/snippets will take effect on it.
-class JenkinsException(Exception):
-    '''General exception type for jenkins-API-related failures.'''
-    pass
 
-authenticated = False
-#
-# try:
-#     #server.get_whoami() # This will throw error because Jenkins (jenkins.py) doesn't not have an attribute called get_whoami
-#     authenticated = True
-# except JenkinsException as e:
-#     print
-#     'There was an error in authentication!'
-#     authenticated = False
+try:
+    server = jenkins.Jenkins('http://localhost:8080', username=username, password=password)
+    user = server.get_whoami()
+    print('You are authenticated by Jenkins as %s' % (user['fullName']))
+    authenticated = True
+except JenkinsException as e:
+    print ('There was an error in authentication!')
+    authenticated = False
+
 
 """ If authenticated, we pass in initialized DB into session and we pass in a loop condition to create joblist """
 if authenticated:
     session = init_db
 
-    jobs = server.get_jobs()
+    jobs = server.get_all_jobs()
     for job in jobs:
         job_name = job['name']
         prev_job_id = get_job(session, job_name)
-        prev_build_number = server.get_info(job_name)['lastbuild']['name']
+        prev_build_number = server.get_job_info(job_name)['lastbuild']['name']
 
         if prev_job_id == None:
             start = 0
         else:
             start = prev_job_id
 
-        job_list = create_joblist(start, lastname, jobname)
-        addJob(session, job_list)
+        job_list = create_joblist(start, prev_build_number, jobname)
+        add_job(session, job_list)
+
 print("The job is successfully updated into Database")
